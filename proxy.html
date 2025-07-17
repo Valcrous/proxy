@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProxyFreeY3 - پراکسی رایگان تلگرام</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://v1.fontapi.ir/css/Vazirmatn');
+        
+        :root {
+            --bg-dark: #111827; /* gray-900 */
+            --bg-light: #1f2937; /* gray-800 */
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(55, 65, 81, 0.5); /* gray-700 */
+            --glow-color: rgba(79, 70, 229, 0.5); /* indigo-600 */
+            --primary-accent: #4f46e5; /* indigo-600 */
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e5e7eb; /* gray-200 */
+            min-height: 100vh;
+        }
+
+        .proxy-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(8px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .proxy-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 25px var(--glow-color);
+        }
+
+        .loading-spinner {
+            animation: spin 1.2s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .yasin-btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .yasin-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+        
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <header class="mb-12 text-center">
+            <div class="inline-block bg-indigo-600 p-4 rounded-full mb-5 shadow-lg shadow-indigo-500/30">
+                <i class="fas fa-shield-alt text-white text-4xl"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-wide mb-3">ProxyFreeY3</h1>
+            <p class="text-lg text-slate-300 mb-8">پراکسی های رایگان و پرسرعت برای تلگرام</p>
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 max-w-2xl mx-auto">
+                <p class="text-slate-300 mb-4 leading-relaxed">
+                    ربات ما <a href="https://t.me/proxyfreeY3bot" target="_blank" class="text-indigo-400 hover:underline font-semibold">@proxyfreeY3bot</a> را در تلگرام دنبال کنید تا همیشه به جدیدترین پراکسی ها دسترسی داشته باشید.
+                </p>
+                <p class="text-slate-300 mb-6">
+                    ارتباط با سازنده: <a href="https://Ya3in.ir" target="_blank" class="text-indigo-400 hover:underline font-semibold">Ya3in.ir</a>
+                </p>
+                <a href="https://t.me/Konfig_free" target="_blank" class="yasin-btn inline-flex items-center justify-center w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                    <i class="fab fa-telegram text-xl ml-2"></i>
+                    <span>عضویت در کانال Konfig_free</span>
+                </a>
+            </div>
+        </header>
+        
+        <main>
+            <div id="yasinLoading" class="text-center py-20">
+                <div class="inline-block loading-spinner text-indigo-400 text-6xl mb-6">
+                    <i class="fas fa-fan"></i>
+                </div>
+                <p class="text-slate-300 text-xl tracking-wider">... در حال دریافت لیست پراکسی‌ها</p>
+            </div>
+            
+            <div id="yasinError" class="hidden text-center py-16 bg-red-900/20 border border-red-500/50 rounded-2xl">
+                <i class="fas fa-exclamation-triangle text-red-400 text-6xl mb-6"></i>
+                <h3 class="text-2xl font-bold text-white mb-2">خطا در اتصال</h3>
+                <p class="text-slate-300 mb-6">مشکلی در دریافت اطلاعات پیش آمده است. لطفا دوباره تلاش کنید.</p>
+                <button id="yasinRetryButton" class="yasin-btn bg-red-500 hover:bg-red-400 text-white px-8 py-2.5 rounded-lg font-semibold">
+                    تلاش دوباره
+                </button>
+            </div>
+            
+            <div id="ya3inContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+        </main>
+        
+        <footer class="mt-16 text-center text-slate-500 text-sm">
+            <p>© 2024 - تمامی حقوق برای <span class="font-bold text-slate-400">ProxyFreeY3</span> محفوظ است.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ya3inContainer = document.getElementById('ya3inContainer');
+            const yasinLoading = document.getElementById('yasinLoading');
+            const yasinError = document.getElementById('yasinError');
+            const yasinRetryButton = document.getElementById('yasinRetryButton');
+            
+            let ya3inMasterList = [];
+            const yasinEncodedSource = 'aHR0cHM6Ly9naXN0LmdpdGh1YnVzZXJjb250ZW50LmNvbS9WYWxjcm91cy8zZDU5M2NhZTM4ZmJkNjQzMTNkMzNlNzVkYmZiZWY2OS9yYXc=';
+
+            const yasinFetchData = () => {
+                yasinLoading.classList.remove('hidden');
+                yasinError.classList.add('hidden');
+                ya3inContainer.classList.add('hidden');
+                
+                const ya3inUrl = atob(yasinEncodedSource);
+                
+                fetch(ya3inUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`YA3IN Network Error`);
+                        return response.text();
+                    })
+                    .then(text => {
+                        const yasinRawLines = text.split('\n').filter(yasinLine => yasinLine.trim().startsWith('tg://proxy'));
+                        ya3inMasterList = ya3inParseAndFilter(yasinRawLines);
+                        yasinDisplayProxies(ya3inMasterList);
+                        yasinLoading.classList.add('hidden');
+                        ya3inContainer.classList.remove('hidden');
+                        ya3inContainer.classList.add('grid');
+                    })
+                    .catch(error => {
+                        console.error('YA3IN Fetch Error:', error);
+                        yasinLoading.classList.add('hidden');
+                        yasinError.classList.remove('hidden');
+                    });
+            };
+
+            const ya3inParseAndFilter = (yasinLines) => {
+                const ya3inUniqueList = [];
+                const yasinSeenServers = new Set();
+
+                yasinLines.forEach(yasinLine => {
+                    try {
+                        const yasinUrlObject = new URL(yasinLine);
+                        const yasinServer = yasinUrlObject.searchParams.get('server');
+                        const yasinPort = yasinUrlObject.searchParams.get('port');
+                        
+                        if (!yasinServer || yasinSeenServers.has(yasinServer)) return; 
+
+                        yasinSeenServers.add(yasinServer);
+                        
+                        ya3inUniqueList.push({
+                            url: yasinLine,
+                            server: yasinServer,
+                            port: yasinPort,
+                            name: `سرور شماره ${ya3inUniqueList.length + 1}`,
+                            ipAddress: `${yasinServer}:${yasinPort}`
+                        });
+                    } catch (e) {
+                        // Silent fail for invalid lines
+                    }
+                });
+                return ya3inUniqueList;
+            };
+            
+            const yasinDisplayProxies = (proxiesToDisplay) => {
+                ya3inContainer.innerHTML = '';
+                
+                if (proxiesToDisplay.length === 0) {
+                    ya3inContainer.innerHTML = `<div class="col-span-full text-center py-10 bg-slate-800 rounded-lg"><p class="text-slate-400">در حال حاضر پراکسی‌ای برای نمایش وجود ندارد.</p></div>`;
+                    return;
+                }
+
+                proxiesToDisplay.forEach((yasinProxy, index) => {
+                    const ya3inCardElement = document.createElement('div');
+                    ya3inCardElement.className = 'proxy-card rounded-2xl p-5 flex flex-col justify-between';
+                    ya3inCardElement.style.animationDelay = `${index * 50}ms`;
+                    
+                    ya3inCardElement.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center mb-5">
+                                <h3 class="text-xl font-bold text-white">${yasinProxy.name}</h3>
+                                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-900/50 border border-slate-700">
+                                    <i class="fa-solid fa-server text-indigo-400"></i>
+                                </span>
+                            </div>
+                            <div class="text-sm text-slate-300 font-mono text-left mb-6 break-all">${yasinProxy.ipAddress}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="connect-btn yasin-btn w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold" data-proxy-url="${yasinProxy.url}">
+                                <i class="fas fa-paper-plane"></i> اتصال
+                            </button>
+                            <button class="copy-btn yasin-btn flex-shrink-0 bg-slate-600 hover:bg-slate-500 text-white w-11 h-11 rounded-lg flex items-center justify-center" data-proxy-url="${yasinProxy.url}" title="کپی لینک">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    `;
+                    ya3inContainer.appendChild(ya3inCardElement);
+                });
+                
+                document.querySelectorAll('.connect-btn').forEach(ya3inButton => {
+                    ya3inButton.addEventListener('click', function() {
+                        window.open(this.getAttribute('data-proxy-url'), '_blank');
+                    });
+                });
+
+                document.querySelectorAll('.copy-btn').forEach(ya3inButton => {
+                    ya3inButton.addEventListener('click', function() {
+                        const proxyLink = this.getAttribute('data-proxy-url');
+                        navigator.clipboard.writeText(proxyLink).then(() => {
+                            const icon = this.querySelector('i');
+                            icon.classList.remove('fa-copy');
+                            icon.classList.add('fa-check');
+                            this.classList.remove('bg-slate-600');
+                            this.classList.add('bg-green-500');
+
+                            setTimeout(() => {
+                                icon.classList.remove('fa-check');
+                                icon.classList.add('fa-copy');
+                                this.classList.remove('bg-green-500');
+                                this.classList.add('bg-slate-600');
+                            }, 2000);
+                        });
+                    });
+                });
+            };
+            
+            yasinRetryButton.addEventListener('click', yasinFetchData);
+
+            yasinFetchData();
+        });
+    </script>
+</body>
+</html>
